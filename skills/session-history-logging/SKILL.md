@@ -27,14 +27,37 @@ EVERY EXCHANGE GETS RECORDED IMMEDIATELY
 ```
 {workdir}/
   .history/
-    {timestamp}-prompt.md      # User's prompts only
-    {timestamp}-summary.md     # Agent response summaries
+    {timestamp}_{topic}-prompt.md      # User's prompts only
+    {timestamp}_{topic}-summary.md     # Agent response summaries
 ```
 
 **Timestamp format:** `YYYY-MM-DD_HH-MM` (24h, local time)
-Example: `2026-03-24_14-30-prompt.md`, `2026-03-24_14-30-summary.md`
+**Topic:** A short slug (2-4 words, kebab-case) derived from the first user prompt.
 
-**If a session starts at the same minute as a prior session**, append a counter: `2026-03-24_14-30-2-prompt.md`
+Examples:
+- `2026-03-24_14-30_review-asana-pr-prompt.md`
+- `2026-03-24_14-30_review-asana-pr-summary.md`
+- `2026-03-24_15-45_create-agent-skills-prompt.md`
+
+**If a session starts at the same minute with the same topic**, append a counter: `2026-03-24_14-30_review-pr-2-prompt.md`
+
+### Topic Derivation Rules
+
+Extract the topic from the user's **first prompt** in the session:
+
+1. Identify the core action and subject (ignore filler words, system directives)
+2. Convert to kebab-case, 2-4 words max
+3. Be specific enough to distinguish from other sessions
+
+| First Prompt | Topic Slug |
+|---|---|
+| "幫我 review https://github.com/.../pull/4" | `review-asana-pr` |
+| "Fix the login bug in auth.ts" | `fix-login-bug` |
+| "建一個新的 skill" | `create-new-skill` |
+| "What's the best way to handle caching?" | `caching-strategy` |
+| "Refactor the payment module" | `refactor-payment` |
+
+**If the first prompt is ambiguous or too vague**, use a generic slug like `session` and update the filename when intent becomes clear.
 
 ## Session Start (First Message)
 
@@ -42,23 +65,24 @@ Example: `2026-03-24_14-30-prompt.md`, `2026-03-24_14-30-summary.md`
 
 1. Create `.history/` directory if it doesn't exist
 2. Determine timestamp from current time
-3. Create both files with headers
-4. Record the first prompt and first response summary
+3. Derive topic slug from the first prompt
+4. Create both files with headers
+5. Record the first prompt and first response summary
 
 ### Initial File Templates
 
-**Prompt file** (`{timestamp}-prompt.md`):
+**Prompt file** (`{timestamp}_{topic}-prompt.md`):
 ```markdown
-# Prompt History — {YYYY-MM-DD HH:MM}
+# Prompt History — {YYYY-MM-DD HH:MM} — {topic}
 
 ## [1] {HH:MM}
 
 {exact user prompt, verbatim}
 ```
 
-**Summary file** (`{timestamp}-summary.md`):
+**Summary file** (`{timestamp}_{topic}-summary.md`):
 ```markdown
-# Response Summary — {YYYY-MM-DD HH:MM}
+# Response Summary — {YYYY-MM-DD HH:MM} — {topic}
 
 ## [1] {HH:MM}
 
