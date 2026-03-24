@@ -2,6 +2,17 @@
 
 Personal AI agent skills.
 
+## Writing Style
+
+This repo uses two writing styles on purpose:
+
+- **Superpowers-style** for behavior-enforcing skills:
+  `no-remote-without-approval`, `cite-sources-with-verification`
+- **Lighter Anthropic-style** for process and format skills:
+  `session-history-logging`, `session-context`
+
+The rule of thumb is simple: use a stricter, more forceful style for skills that prevent risky behavior; use a shorter, calmer structure for skills that define workflow, file layout, or formatting conventions.
+
 ## Skills
 
 | Skill | Description |
