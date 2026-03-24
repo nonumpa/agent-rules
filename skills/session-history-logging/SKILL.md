@@ -96,6 +96,15 @@ Extract the topic from the user's **first prompt** in the session:
 1. Append the user's prompt to the prompt file
 2. Append a summary of the agent's response to the summary file
 
+### Silent Operation
+
+History logging should run **silently in the background**.
+
+- Do **not** print history file contents to the terminal
+- Do **not** announce each append operation unless the user explicitly asks
+- Treat `.history/` updates as bookkeeping, not user-facing output
+- Mention history logging only when debugging it, verifying it, or when the user asks where the files are
+
 ### Append Format
 
 **Prompt file** — append:
