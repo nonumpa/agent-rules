@@ -1,63 +1,57 @@
 ---
 name: session-context
-description: Use when ending a session, switching tasks, or when user requests a context file - creates structured context documents in .history/context/ for cross-session continuity, with git-aware staleness detection and parallel session conflict resolution
+description: Use when ending a session, switching tasks, or when a workstream needs a structured context file in .history/context/ for the next session to resume from
 ---
 
 # Session Context
 
 ## Overview
 
-Create structured context documents that let the next session pick up exactly where this one left off.
+Create structured context documents that help the next session resume work with the right state, decisions, and next steps.
 
-**Core principle:** Context files capture *state and decisions*, not history. History lives in `.history/` logs. Context is an actionable snapshot for resumption.
+Context files complement `.history/` logs: history records the exchange, while context captures the current state of the work.
 
-## When This Applies
+## When to Use
 
-```dot
-digraph context_trigger {
-  "Session ending?" [shape=diamond];
-  "User requests context?" [shape=diamond];
-  "Substantial work done?" [shape=diamond];
-  "Create context file" [shape=box];
-  "Skip" [shape=box];
+Use this skill when:
+- A session is ending after meaningful work
+- The user asks to save or write context
+- Work is switching to a different task or phase
 
-  "Session ending?" -> "Substantial work done?" [label="yes"];
-  "Session ending?" -> "User requests context?" [label="no"];
-  "User requests context?" -> "Create context file" [label="yes"];
-  "User requests context?" -> "Skip" [label="no"];
-  "Substantial work done?" -> "Create context file" [label="yes"];
-  "Substantial work done?" -> "Skip" [label="no, trivial Q&A"];
-}
-```
-
-**Triggers:**
-- Session ending after meaningful work (2+ file edits, or architecture decisions made)
-- User says: "寫交接", "save context", "write context", "我要離開了", or similar
-- Switching to a different task mid-session
-
-**Do NOT create context for:**
-- Pure Q&A sessions with no state changes
-- Sessions that only read/explored code without decisions
+It is usually unnecessary for pure Q&A or brief exploratory sessions with no durable state.
 
 ## File Structure
 
-```
+```text
 {workdir}/
   .history/
     context/
       {timestamp}_{topic}-context.md
 ```
 
-**Naming:** Same convention as session-history-logging.
-- `{timestamp}`: `YYYY-MM-DD_HH-MM` (24h, local time)
-- `{topic}`: 2-4 word kebab-case slug from session's primary task
-- Suffix: `-context.md`
+- **Timestamp:** `YYYY-MM-DD_HH-MM`
+- **Topic:** short kebab-case slug for the primary task
+- **Suffix:** `-context.md`
 
 Examples:
 - `2026-03-24_14-30_auth-refactor-context.md`
 - `2026-03-24_16-00_fix-webhook-bug-context.md`
 
-## Context Document Template
+## Required Sections
+
+Every context document should include:
+- **Goal**
+- **Current State**
+- **Key Decisions**
+
+Include these additional sections when relevant:
+- **Completed Work**
+- **Not Yet Done**
+- **Failed Approaches**
+- **Code Context**
+- **Resume Instructions**
+
+## Context Template
 
 ```markdown
 # Context: {topic}
@@ -68,192 +62,136 @@ Examples:
 
 ## Goal
 
-{One sentence: What are we trying to accomplish?}
+{One sentence describing the task or outcome.}
 
 ## Current State
 
-{What's working, what's broken, what's partially done. Be specific — file paths, line numbers, error messages.}
+{What is working, what is incomplete, what is blocked. Include file paths or errors when useful.}
 
 ## Key Decisions
 
 | Decision | Rationale |
 |----------|-----------|
-| {what was decided} | {why — the alternative considered and why rejected} |
+| {what was decided} | {why it was chosen} |
 
 ## Completed Work
 
-- [x] {what was done}
-- [x] {what was done}
+- [x] {completed item}
 
 ## Not Yet Done
 
-- [ ] {next step — specific, actionable}
-- [ ] {next step}
+- [ ] {next actionable step}
 
 ## Failed Approaches
 
-{What was tried and didn't work. Include WHY it failed. This prevents the next session from retrying dead ends.}
-
-> ⚠️ Do not retry: {specific approach} — failed because {reason}
+{Optional notes on approaches that should not be retried without new information.}
 
 ## Code Context
 
-{Key file paths, function signatures, API shapes that the next session needs. Only include what's NOT obvious from reading the code.}
+{Optional technical details, files, functions, APIs, or constraints that matter for resuming the work.}
 
 ## Resume Instructions
 
-{Exact steps to pick up where we left off. Be specific enough that a fresh agent can act immediately.}
-
-1. {first thing to do}
-2. {second thing to do}
+1. {first step}
+2. {second step}
 ```
 
-### Section Rules
+## Writing Guidance
 
-**Mandatory (always include):**
-- Goal
-- Current State
-- Key Decisions
+Good context files are:
+- Specific about current state
+- Actionable for a fresh agent or session
+- Honest about uncertainty or blockers
+- Concise enough to scan quickly
 
-**Optional (include when relevant):**
-- Completed Work — when there's a checklist to track
-- Not Yet Done — when there are clear next steps
-- Failed Approaches — when dead ends were discovered (**strongly recommended**)
-- Code Context — when non-obvious technical details matter
-- Resume Instructions — when the next session needs specific startup steps
+Avoid:
+- Reproducing the full conversation
+- Vague status such as "mostly done"
+- Large pasted code blocks when a file path would be clearer
+- Secrets, tokens, or credentials
 
-## New Session: Auto-Detection
+## New Session Behavior
 
-**On starting a new session, BEFORE any work:**
+At the start of a new session:
 
-1. Check if `{workdir}/.history/context/` exists
-2. If it has context files, list them sorted by timestamp (newest first)
-3. Apply staleness detection (see below)
-4. Present findings to user
+1. Check whether `{workdir}/.history/context/` exists
+2. List available context files, newest first
+3. Review likely candidates before starting work
 
-### Staleness Detection (Git-Aware)
+When presenting a context file, summarize the key fields:
+- filename
+- status
+- goal
+- branch, if available
 
-```dot
-digraph staleness {
-  "Context file found" [shape=box];
-  "Git repo?" [shape=diamond];
-  "Commits since context?" [shape=diamond];
-  "Files in context changed?" [shape=diamond];
-  "Load as-is" [shape=box];
-  "Load with warning" [shape=box];
-  "Load, flag stale sections" [shape=box];
+## Staleness Check
 
-  "Context file found" -> "Git repo?";
-  "Git repo?" -> "Commits since context?" [label="yes"];
-  "Git repo?" -> "Load as-is" [label="no"];
-  "Commits since context?" -> "Load as-is" [label="0 commits"];
-  "Commits since context?" -> "Files in context changed?" [label="1+ commits"];
-  "Files in context changed?" -> "Load, flag stale sections" [label="yes"];
-  "Files in context changed?" -> "Load with warning" [label="no"];
-}
-```
+If the workdir is a git repository, treat context files as snapshots that may become stale.
 
-**How to check:**
+Useful checks:
+
 ```bash
-# Get context file's timestamp
-CONTEXT_DATE=$(stat -f %Sm -t %Y-%m-%dT%H:%M "%s" "$CONTEXT_FILE")
+# Count commits since the context file was written
+git log --oneline --since="$CONTEXT_DATE"
 
-# Count commits since context was written
-git log --oneline --since="$CONTEXT_DATE" | wc -l
-
-# Check if files mentioned in context were modified
+# Check whether files mentioned in the context changed
 git diff --name-only "$CONTEXT_DATE"..HEAD
 ```
 
-**Presentation to user:**
+If there have been relevant changes since the context file was written, load it with a warning and flag the sections most likely to be outdated.
+
+Example presentation:
 
 ```markdown
 📋 Found context file: `2026-03-24_14-30_auth-refactor-context.md`
 - Status: In Progress
 - Goal: Implement OAuth2 authentication
 - ⚠️ 3 commits since this context was written
-- ⚠️ `src/auth/oauth.ts` was modified (mentioned in context)
-
-Load this context? [Y/n]
+- ⚠️ `src/auth/oauth.ts` changed after this context was saved
 ```
 
-## Parallel Session Conflicts
+## Parallel Context Files
 
-When multiple context files exist for overlapping work:
+If multiple context files appear to describe overlapping work, show both and let the user choose how to proceed.
 
-**Detection:** Two or more context files where:
-- Created within 24h of each other, AND
-- Topic slugs share 2+ words, OR
-- `Goal` sections reference the same files/modules
+This commonly happens when:
+- Files were created within a short time window
+- Topics are closely related
+- Goals reference the same modules or files
 
-**Resolution: Show both, let user choose.**
+Example presentation:
 
 ```markdown
-📋 Found 2 potentially related context files:
+📋 Found 2 related context files:
 
 **[A]** `2026-03-24_14-30_auth-refactor-context.md`
 - Status: In Progress
 - Goal: Refactor OAuth2 to use httpOnly cookies
-- Branch: feature/auth-cookies
 
 **[B]** `2026-03-24_16-00_auth-token-fix-context.md`
 - Status: Complete
 - Goal: Fix token refresh 500 error
-- Branch: fix/token-refresh
 
 Options:
-1. Load [A] only
-2. Load [B] only
-3. Load both (I'll reconcile)
-4. Ignore both, start fresh
+1. Load [A]
+2. Load [B]
+3. Load both and reconcile
+4. Ignore both and start fresh
 ```
 
-## Writing Guidelines
-
-**Good context files:**
-- Specific: file paths, line numbers, error messages verbatim
-- Actionable: next steps a fresh agent can execute immediately
-- Honest: clearly state what's broken or uncertain
-- Concise: under 200 lines. Point to `.history/` logs for full details.
-
-**Bad context files:**
-- ❌ Restating the entire conversation (that's what `.history/` is for)
-- ❌ Vague status: "mostly done" (which parts? what's left?)
-- ❌ Missing rationale in Key Decisions (decisions without "why" are useless)
-- ❌ Including secrets, tokens, or credentials
-
-## Relationship to session-history-logging
+## Relationship to Session History
 
 | | session-history-logging | session-context |
 |---|---|---|
-| **Purpose** | Chronological record | Actionable state snapshot |
-| **When written** | Every exchange | Session end or on-demand |
-| **Format** | Append-only log | Structured template |
-| **Location** | `.history/{ts}_{topic}-prompt.md` | `.history/context/{ts}_{topic}-context.md` |
-| **Next session** | Reference for details | Starting point for work |
+| **Purpose** | Chronological log | State snapshot |
+| **When written** | Every exchange | Session end or on demand |
+| **Format** | Append-only entries | Structured summary |
+| **Location** | `.history/{ts}_{topic}-prompt.md` and summary | `.history/context/{ts}_{topic}-context.md` |
 
-**Context files may reference history files:** "See `.history/2026-03-24_14-30_auth-refactor-summary.md` entries [3]-[7] for full discussion."
+Context files may reference specific `.history/` files when more detail is useful.
 
-## Red Flags - STOP
+## Notes
 
-- Ending a session with substantial work and no context file
-- Writing a context file with no "Key Decisions" section
-- Context file over 300 lines (you're writing a transcript, not a snapshot)
-- Including secrets or credentials in context files
-- Copying entire code blocks instead of referencing file paths
-
-## Rationalization Prevention
-
-| Excuse | Reality |
-|--------|---------|
-| "The history files are enough" | History is a log. Context is actionable state. Different purposes. |
-| "I'll remember next session" | You won't. You're a new agent instance. Write it down. |
-| "Not enough was done to warrant context" | If decisions were made, they need recording. |
-| "It's obvious from the code" | Code shows WHAT, not WHY or WHAT'S NEXT. |
-| "I'll write it next session from memory" | Session memory doesn't transfer. That's the whole point. |
-
-## The Bottom Line
-
-**History records what happened. Context transfers what matters.**
-
-Write context at session end. Load context at session start. Never lose state between sessions.
+- Prefer file paths and short explanations over long pasted content
+- Use context files to capture what matters for resuming the work
+- Keep them current enough to be useful, but concise enough to scan quickly
