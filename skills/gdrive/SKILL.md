@@ -1,3 +1,8 @@
+---
+name: gdrive
+description: Use when accessing Google Drive — list, download, upload, search, or export files via Drive API v3
+---
+
 # Google Drive Skill
 
 Google Drive file operations via Drive API v3. List, download, upload, search, and export files.
@@ -19,51 +24,51 @@ Use this skill when:
 ## Script Location
 
 ```
-~/.config/opencode/superpowers/skills/gdrive/gdrive.py
+$SKILL_DIR/gdrive.py
 ```
 
 ## Commands
 
 ### List folder contents
 ```bash
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py ls <folder_url_or_id>
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py ls "https://drive.google.com/drive/folders/1ZJMAJqRrEXTbcw4fnnX91Cs0l_WVJuaU"
+python3 $SKILL_DIR/gdrive.py ls <folder_url_or_id>
+python3 $SKILL_DIR/gdrive.py ls "https://drive.google.com/drive/folders/1ZJMAJqRrEXTbcw4fnnX91Cs0l_WVJuaU"
 ```
 
 ### Download a single file
 ```bash
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py download <file_url_or_id> --dest ~/output/
+python3 $SKILL_DIR/gdrive.py download <file_url_or_id> --dest ~/output/
 ```
 
 ### Download entire folder (recursive)
 ```bash
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py download-folder <folder_url_or_id> --dest ~/output/
+python3 $SKILL_DIR/gdrive.py download-folder <folder_url_or_id> --dest ~/output/
 ```
 - Automatically exports Google Docs/Sheets/Slides as docx/xlsx/pptx
 - Skips video files
 
 ### Export Google Docs/Sheets/Slides
 ```bash
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py export <file_url_or_id> --format docx
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py export <spreadsheet_url> --format xlsx --dest ~/output/
+python3 $SKILL_DIR/gdrive.py export <file_url_or_id> --format docx
+python3 $SKILL_DIR/gdrive.py export <spreadsheet_url> --format xlsx --dest ~/output/
 ```
 Formats: docx, xlsx, pptx, pdf, csv, txt
 
 ### Upload a file
 ```bash
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py upload ./report.pdf --parent <folder_id>
+python3 $SKILL_DIR/gdrive.py upload ./report.pdf --parent <folder_id>
 ```
 
 ### Search files
 ```bash
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py search "自評表"
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py search "keyword" --folder <folder_id> --content
+python3 $SKILL_DIR/gdrive.py search "自評表"
+python3 $SKILL_DIR/gdrive.py search "keyword" --folder <folder_id> --content
 ```
 `--content` flag searches file content in addition to file names.
 
 ### Auth setup (first time only)
 ```bash
-python3 ~/.config/opencode/superpowers/skills/gdrive/gdrive.py auth --account user@example.com --port 8085
+python3 $SKILL_DIR/gdrive.py auth --account user@example.com --port 8085
 ```
 Auth flow:
 1. Script starts localhost server on port 8085
@@ -75,7 +80,8 @@ Auth flow:
 
 ```python
 import sys
-sys.path.insert(0, str(Path("~/.config/opencode/superpowers/skills/gdrive").expanduser()))
+from pathlib import Path
+sys.path.insert(0, "<path-to-gdrive-skill-directory>")
 from gdrive import DriveClient
 
 client = DriveClient()

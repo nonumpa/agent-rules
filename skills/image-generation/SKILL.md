@@ -15,15 +15,15 @@ Generate images via OpenAI (gpt-image-1) or Google Imagen (Vertex AI), auto-uplo
 
 ## Prerequisites
 
-- Vertex AI venv: `~/.config/opencode/superpowers/skills/image-generation/.venv/`
+- Vertex AI venv: `$SKILL_DIR/.venv/`
 - GCP auth: `gcloud auth application-default login`
 - OpenAI (optional): `OPENAI_API_KEY` env var
 - GDrive skill configured (for auto-upload)
 
 First-time setup:
 ```bash
-python3 -m venv ~/.config/opencode/superpowers/skills/image-generation/.venv
-~/.config/opencode/superpowers/skills/image-generation/.venv/bin/pip install google-cloud-aiplatform openai
+python3 -m venv $SKILL_DIR/.venv
+$SKILL_DIR/.venv/bin/pip install google-cloud-aiplatform openai
 ```
 
 On first run, the script will interactively prompt for **GCP Project ID** and **Google Drive folder ID**, then save them to `config.json` (git-ignored).
@@ -31,41 +31,41 @@ On first run, the script will interactively prompt for **GCP Project ID** and **
 ## Script
 
 ```
-~/.config/opencode/superpowers/skills/image-generation/generate_image.py
+$SKILL_DIR/generate_image.py
 ```
 
 Run with the skill's venv python:
 ```
-~/.config/opencode/superpowers/skills/image-generation/.venv/bin/python
+$SKILL_DIR/.venv/bin/python
 ```
 
 ## Commands
 
 ### Google Imagen (default, Vertex AI)
 ```bash
-VENV=~/.config/opencode/superpowers/skills/image-generation/.venv/bin/python
-$VENV ~/.config/opencode/superpowers/skills/image-generation/generate_image.py "a sunset over mountains" -p google
+VENV=$SKILL_DIR/.venv/bin/python
+$VENV $SKILL_DIR/generate_image.py "a sunset over mountains" -p google
 ```
 
 ### OpenAI
 ```bash
-$VENV ~/.config/opencode/superpowers/skills/image-generation/generate_image.py "a sunset over mountains" -p openai
+$VENV $SKILL_DIR/generate_image.py "a sunset over mountains" -p openai
 ```
 
 ### Both platforms
 ```bash
-$VENV ~/.config/opencode/superpowers/skills/image-generation/generate_image.py "a sunset over mountains" -p both
+$VENV $SKILL_DIR/generate_image.py "a sunset over mountains" -p both
 ```
 
 ### Skip GDrive upload
 ```bash
-$VENV ~/.config/opencode/superpowers/skills/image-generation/generate_image.py "a sunset" -p google --no-upload
+$VENV $SKILL_DIR/generate_image.py "a sunset" -p google --no-upload
 ```
 
 ### Custom options
 ```bash
-$VENV ~/.config/opencode/superpowers/skills/image-generation/generate_image.py "a sunset" -p google --aspect-ratio 16:9
-$VENV ~/.config/opencode/superpowers/skills/image-generation/generate_image.py "a sunset" -p openai --size 1792x1024 --quality hd
+$VENV $SKILL_DIR/generate_image.py "a sunset" -p google --aspect-ratio 16:9
+$VENV $SKILL_DIR/generate_image.py "a sunset" -p openai --size 1792x1024 --quality hd
 ```
 
 ## Options Quick Reference

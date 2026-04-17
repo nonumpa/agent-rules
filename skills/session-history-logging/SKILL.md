@@ -145,8 +145,7 @@ Recommended request-changes with a prioritized fix order.
 
 ## [4] 15:35
 
-Created `no-remote-without-approval` at
-~/.config/opencode/superpowers/skills/no-remote-without-approval/SKILL.md.
+Created `no-remote-without-approval` skill.
 The rule blocks remote Git and GitHub writes until explicit approval.
 ```
 
@@ -162,5 +161,6 @@ Avoid summaries that are too vague or that paste the full response.
 ## Notes
 
 - `.history/` is the durable record of the session
+- `.history/` should be added to the repository's `.gitignore` to avoid committing session logs
 - Keep the files structured and easy to scan
 - If session logging is already in place, continue using the same file pair for the session

@@ -5,8 +5,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Import from vision skill
-_vision_skill_dir = str(Path("~/.config/opencode/superpowers/skills/vision").expanduser())
+# Import from vision skill (resolve relative to this skill's location)
+_vision_skill_dir = str(Path(__file__).resolve().parent.parent.parent / "vision")
 if _vision_skill_dir not in sys.path:
     sys.path.insert(0, _vision_skill_dir)
 

@@ -63,12 +63,12 @@ digraph gate {
 
 **For every link, use ONE of these to confirm it's real:**
 
-| Method | When to Use | Tool |
-|--------|-------------|------|
-| **Fetch the URL** | Web pages, docs, blog posts | `webfetch(url=...)` |
-| **Web search** | Find the real URL if unsure | `websearch_web_search_exa(query=...)` |
-| **GitHub search** | Repos, issues, code examples | `grep_app_searchGitHub(query=...)` |
-| **Context7 docs** | Library documentation | `context7_query-docs(...)` |
+| Method | When to Use | How |
+|--------|-------------|-----|
+| **Fetch the URL** | Web pages, docs, blog posts | Fetch the URL directly and check the content |
+| **Web search** | Find the real URL if unsure | Use a web search tool to locate the page |
+| **GitHub search** | Repos, issues, code examples | Search GitHub for the repository or code |
+| **Documentation lookup** | Library documentation | Query official docs via documentation tools |
 
 ### Verification Steps
 
@@ -79,11 +79,10 @@ digraph gate {
 
 ```
 # Example: verify a documentation link
-webfetch(url="https://fastapi.tiangolo.com/tutorial/security/", format="text")
-→ Confirm page exists and content matches claim
+Fetch the URL and confirm the page exists and content matches your claim
 
 # Example: find the real URL when unsure
-websearch_web_search_exa(query="FastAPI official documentation on dependency injection")
+Search the web for "FastAPI official documentation on dependency injection"
 → Get verified URL from search results
 ```
 

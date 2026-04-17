@@ -1,3 +1,8 @@
+---
+name: vision
+description: Use when analyzing images — OCR text extraction or content description (diagrams, charts, UI, tables) via Vertex AI Gemini or Cloud Vision API
+---
+
 # vision
 
 Analyze images using Vertex AI Gemini (default) or Google Cloud Vision API.
@@ -19,31 +24,31 @@ Use this skill when:
 ### Single image — describe content (default)
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/vision/analyze.py image.png
+python3 $SKILL_DIR/analyze.py image.png
 ```
 
 ### Single image — OCR (extract text only)
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/vision/analyze.py --mode ocr screenshot.png
+python3 $SKILL_DIR/analyze.py --mode ocr screenshot.png
 ```
 
 ### With context hint (for document images)
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/vision/analyze.py --context "這是安裝手冊中的架構圖" figure.png
+python3 $SKILL_DIR/analyze.py --context "這是安裝手冊中的架構圖" figure.png
 ```
 
 ### Multiple images
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/vision/analyze.py img1.png img2.png img3.png
+python3 $SKILL_DIR/analyze.py img1.png img2.png img3.png
 ```
 
 ### Use Cloud Vision API instead of Gemini
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/vision/analyze.py --engine cloud_vision image.png
+python3 $SKILL_DIR/analyze.py --engine cloud_vision image.png
 ```
 
 ## Options
@@ -60,7 +65,7 @@ python3 ~/.config/opencode/superpowers/skills/vision/analyze.py --engine cloud_v
 ```python
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path("~/.config/opencode/superpowers/skills/vision").expanduser()))
+sys.path.insert(0, "<path-to-vision-skill-directory>")
 
 from analyze import analyze, ocr, describe, analyze_batch, get_engine
 

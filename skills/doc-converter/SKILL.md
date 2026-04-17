@@ -1,3 +1,8 @@
+---
+name: doc-converter
+description: Use when reading or converting PDF, DOCX, XLSX, PPTX, DOC, PPT files to Markdown
+---
+
 # doc-converter
 
 Convert documents (PDF, DOCX, XLSX, PPTX, DOC, PPT) to high-quality Markdown using the best tool per format.
@@ -22,14 +27,14 @@ Before converting, check if `{filename}_converted.md` already exists in the same
 Run the converter script from the skill directory:
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/doc-converter/convert.py <file_path>
+python3 $SKILL_DIR/convert.py <file_path>
 ```
 
 For multiple files or a directory:
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/doc-converter/convert.py <file1> <file2> ...
-python3 ~/.config/opencode/superpowers/skills/doc-converter/convert.py <directory>
+python3 $SKILL_DIR/convert.py <file1> <file2> ...
+python3 $SKILL_DIR/convert.py <directory>
 ```
 
 ### Step 3 (Optional): Enable vision for image analysis
@@ -37,19 +42,19 @@ python3 ~/.config/opencode/superpowers/skills/doc-converter/convert.py <director
 If the document contains important images (architecture diagrams, screenshots, charts) and the user wants image descriptions:
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/doc-converter/convert.py --vision <file_path>
+python3 $SKILL_DIR/convert.py --vision <file_path>
 ```
 
 To use Cloud Vision API instead of Gemini:
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/doc-converter/convert.py --vision --vision-engine cloud_vision <file_path>
+python3 $SKILL_DIR/convert.py --vision --vision-engine cloud_vision <file_path>
 ```
 
 To save images as separate files:
 
 ```bash
-python3 ~/.config/opencode/superpowers/skills/doc-converter/convert.py --vision --image-output referenced --images-dir ./images <file_path>
+python3 $SKILL_DIR/convert.py --vision --image-output referenced --images-dir ./images <file_path>
 ```
 
 ### Step 4: Read the output
