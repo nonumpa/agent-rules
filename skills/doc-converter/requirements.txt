@@ -1,0 +1,7 @@
+docling>=2.88.0
+markitdown[all]>=0.1.5
+google-genai>=1.0.0
+pypdf>=4.0.0
+Pillow>=10.0.0
+# Optional: for cloud_vision engine
+# google-cloud-vision>=3.0.0
