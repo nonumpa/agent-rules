@@ -31,12 +31,15 @@ def _load_config() -> dict:
     if not gcp_project:
         sys.exit("Error: GCP Project ID is required.")
 
+    vertex_region = input("Vertex AI region [us-central1]: ").strip() or "us-central1"
+
     gdrive_folder = input("Google Drive folder ID (for auto-upload): ").strip()
     if not gdrive_folder:
         sys.exit("Error: Google Drive folder ID is required.")
 
     config = {
         "gcp_project_id": gcp_project,
+        "vertex_region": vertex_region,
         "gdrive_folder_id": gdrive_folder,
     }
     CONFIG_PATH.write_text(json.dumps(config, indent=2) + "\n")
@@ -108,18 +111,15 @@ def generate_google(
     output_dir: Path,
     aspect_ratio: str,
     use_vertex: bool,
-    project_id: str | None,
+    project_id: str,
+    vertex_region: str,
 ) -> Path:
 
     if use_vertex:
         import vertexai
         from vertexai.preview.vision_models import ImageGenerationModel
 
-        proj = project_id or os.environ.get("GCP_PROJECT_ID")
-        if not proj:
-            sys.exit("[Google] Error: set GCP_PROJECT_ID env var or pass --gcp-project")
-
-        vertexai.init(project=proj, location="us-central1")
+        vertexai.init(project=project_id, location=vertex_region)
         model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
 
         print("[Google] Generating with Vertex AI imagen-3.0-generate-002...")
@@ -260,6 +260,7 @@ def main():
                 args.aspect_ratio,
                 args.vertex,
                 args.gcp_project,
+                config["vertex_region"],
             )
             generated.append(path)
         except Exception as e:

@@ -79,11 +79,9 @@ engine = get_engine("gemini")
 engine.analyze(pil_image, context="...")
 ```
 
-## Environment Variables
+## Configuration
 
-- `GOOGLE_CLOUD_PROJECT` — GCP project ID
-- `VERTEX_REGION` — Vertex AI region (default: asia-east1)
-- `OCR_MODEL` — Gemini model name (default: gemini-2.5-flash)
+On first run, the script prompts for GCP Project ID, Vertex AI region, and default model, then saves to `config.json` (git-ignored). No env vars needed.
 
 ## Mode Selection Guide
 

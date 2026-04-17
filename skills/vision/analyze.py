@@ -26,14 +26,52 @@ Usage:
 from __future__ import annotations
 
 import io
+import json
 import mimetypes
-import os
 import sys
 from pathlib import Path
+
+SKILL_DIR = Path(__file__).resolve().parent
+CONFIG_PATH = SKILL_DIR / "config.json"
 
 _genai = None
 _genai_types = None
 _vision = None
+_config = None
+
+
+def _load_config() -> dict:
+    global _config
+    if _config is not None:
+        return _config
+
+    if CONFIG_PATH.exists():
+        _config = json.loads(CONFIG_PATH.read_text())
+        return _config
+
+    print("=" * 60)
+    print("  Vision Skill — First-time setup")
+    print("=" * 60)
+    print()
+
+    gcp_project = input("GCP Project ID: ").strip()
+    if not gcp_project:
+        sys.exit("Error: GCP Project ID is required.")
+
+    vertex_region = input("Vertex AI region [asia-east1]: ").strip() or "asia-east1"
+    default_model = (
+        input("Default Gemini model [gemini-2.5-flash]: ").strip() or "gemini-2.5-flash"
+    )
+
+    _config = {
+        "gcp_project_id": gcp_project,
+        "vertex_region": vertex_region,
+        "default_model": default_model,
+    }
+    CONFIG_PATH.write_text(json.dumps(_config, indent=2) + "\n")
+    print(f"\nConfig saved to {CONFIG_PATH}")
+    print()
+    return _config
 
 
 def _ensure_genai():
@@ -41,6 +79,7 @@ def _ensure_genai():
     if _genai is None:
         from google import genai
         from google.genai import types as genai_types
+
         _genai = genai
         _genai_types = genai_types
 
@@ -49,12 +88,9 @@ def _ensure_cloud_vision():
     global _vision
     if _vision is None:
         from google.cloud import vision
+
         _vision = vision
 
-
-DEFAULT_PROJECT = "your-project-id"
-DEFAULT_REGION = "asia-east1"
-DEFAULT_MODEL = "gemini-2.5-flash"
 
 OCR_PROMPT = "請完整擷取圖片中所有文字，保持原始排版結構，不要加任何說明"
 
@@ -78,7 +114,16 @@ DESCRIBE_WITH_CONTEXT_PROMPT = (
     "不要加上「這是一張...的圖片」等前綴說明，直接輸出內容。"
 )
 
-SUPPORTED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".tif", ".webp"}
+SUPPORTED_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".bmp",
+    ".tiff",
+    ".tif",
+    ".webp",
+}
 
 _gemini_client = None
 
@@ -87,9 +132,10 @@ def _get_gemini_client():
     global _gemini_client
     if _gemini_client is None:
         _ensure_genai()
+        config = _load_config()
         _gemini_client = _genai.Client(
-            project=os.getenv("GOOGLE_CLOUD_PROJECT", DEFAULT_PROJECT),
-            location=os.getenv("VERTEX_REGION", DEFAULT_REGION),
+            project=config["gcp_project_id"],
+            location=config["vertex_region"],
             vertexai=True,
             http_options=_genai_types.HttpOptions(api_version="v1"),
         )
@@ -120,12 +166,16 @@ def _pil_to_bytes(pil_image) -> tuple[bytes, str]:
 # Gemini engine
 # ---------------------------------------------------------------------------
 
-def _gemini_analyze(image_bytes: bytes, mime_type: str, prompt: str, model: str | None = None) -> str:
+
+def _gemini_analyze(
+    image_bytes: bytes, mime_type: str, prompt: str, model: str | None = None
+) -> str:
     _ensure_genai()
     image_part = _genai_types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
     client = _get_gemini_client()
+    config = _load_config()
     response = client.models.generate_content(
-        model=model or os.getenv("OCR_MODEL", DEFAULT_MODEL),
+        model=model or config["default_model"],
         contents=[prompt, image_part],
     )
     return response.text
@@ -135,17 +185,20 @@ def _gemini_analyze(image_bytes: bytes, mime_type: str, prompt: str, model: str 
 # Cloud Vision engine
 # ---------------------------------------------------------------------------
 
+
 def _cloud_vision_analyze(image_bytes: bytes) -> str:
     _ensure_cloud_vision()
     image = _vision.Image(content=image_bytes)
     client = _vision.ImageAnnotatorClient()
-    response = client.annotate_image({
-        "image": image,
-        "features": [
-            {"type_": _vision.Feature.Type.DOCUMENT_TEXT_DETECTION},
-            {"type_": _vision.Feature.Type.LABEL_DETECTION},
-        ],
-    })
+    response = client.annotate_image(
+        {
+            "image": image,
+            "features": [
+                {"type_": _vision.Feature.Type.DOCUMENT_TEXT_DETECTION},
+                {"type_": _vision.Feature.Type.LABEL_DETECTION},
+            ],
+        }
+    )
     parts = []
     if response.label_annotations:
         labels = [la.description for la in response.label_annotations[:5]]
@@ -158,6 +211,7 @@ def _cloud_vision_analyze(image_bytes: bytes) -> str:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def analyze(
     image: str | Path | object,
@@ -202,7 +256,9 @@ def ocr(image: str | Path | object, *, model: str | None = None) -> str:
     return analyze(image, mode="ocr", model=model)
 
 
-def describe(image: str | Path | object, *, context: str = "", model: str | None = None) -> str:
+def describe(
+    image: str | Path | object, *, context: str = "", model: str | None = None
+) -> str:
     """Shortcut: describe image content."""
     return analyze(image, mode="describe", context=context, model=model)
 
@@ -231,6 +287,7 @@ def analyze_batch(
 # Adapter: VisionEngine interface for doc-converter compatibility
 # ---------------------------------------------------------------------------
 
+
 class GeminiVisionEngine:
     """VisionEngine-compatible adapter for doc-converter skill."""
 
@@ -240,7 +297,9 @@ class GeminiVisionEngine:
     def analyze(self, image, context: str = "") -> str:
         return describe(image, context=context, model=self._model)
 
-    def analyze_batch(self, images: list, contexts: list[str] | None = None) -> list[str]:
+    def analyze_batch(
+        self, images: list, contexts: list[str] | None = None
+    ) -> list[str]:
         contexts = contexts or [""] * len(images)
         return [self.analyze(img, ctx) for img, ctx in zip(images, contexts)]
 
@@ -251,7 +310,9 @@ class CloudVisionEngine:
     def analyze(self, image, context: str = "") -> str:
         return analyze(image, engine="cloud_vision")
 
-    def analyze_batch(self, images: list, contexts: list[str] | None = None) -> list[str]:
+    def analyze_batch(
+        self, images: list, contexts: list[str] | None = None
+    ) -> list[str]:
         return [self.analyze(img) for img in images]
 
 
@@ -262,29 +323,52 @@ def get_engine(name: str = "gemini", **kwargs):
     elif name == "cloud_vision":
         return CloudVisionEngine(**kwargs)
     else:
-        raise ValueError(f"Unknown engine: {name!r}. Available: 'gemini', 'cloud_vision'")
+        raise ValueError(
+            f"Unknown engine: {name!r}. Available: 'gemini', 'cloud_vision'"
+        )
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Image analysis via Vertex AI Gemini / Cloud Vision")
+    parser = argparse.ArgumentParser(
+        description="Image analysis via Vertex AI Gemini / Cloud Vision"
+    )
     parser.add_argument("images", nargs="+", help="Image file path(s)")
-    parser.add_argument("--mode", "-m", default="describe", choices=["ocr", "describe"],
-                        help="Analysis mode (default: describe)")
-    parser.add_argument("--engine", "-e", default="gemini", choices=["gemini", "cloud_vision"],
-                        help="Vision engine (default: gemini)")
+    parser.add_argument(
+        "--mode",
+        "-m",
+        default="describe",
+        choices=["ocr", "describe"],
+        help="Analysis mode (default: describe)",
+    )
+    parser.add_argument(
+        "--engine",
+        "-e",
+        default="gemini",
+        choices=["gemini", "cloud_vision"],
+        help="Vision engine (default: gemini)",
+    )
     parser.add_argument("--model", default=None, help="Gemini model override")
-    parser.add_argument("--context", "-c", default="", help="Context hint for better descriptions")
+    parser.add_argument(
+        "--context", "-c", default="", help="Context hint for better descriptions"
+    )
     args = parser.parse_args()
 
     for img in args.images:
         try:
-            text = analyze(img, mode=args.mode, context=args.context, engine=args.engine, model=args.model)
+            text = analyze(
+                img,
+                mode=args.mode,
+                context=args.context,
+                engine=args.engine,
+                model=args.model,
+            )
             if len(args.images) > 1:
                 print(f"--- {img} ---")
             print(text)

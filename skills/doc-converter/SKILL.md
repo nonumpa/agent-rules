@@ -79,11 +79,9 @@ The converted markdown is saved as `{original_filename}_converted.md` in the sam
 | `--batch-size` | `15` | Pages per batch for large PDFs |
 | `-v` | off | Verbose logging |
 
-## Environment Variables (for Gemini engine)
+## Configuration (for Gemini engine)
 
-- `GOOGLE_CLOUD_PROJECT` — GCP project ID
-- `VERTEX_REGION` — Vertex AI region (default: asia-east1)
-- `OCR_MODEL` — Gemini model name (default: gemini-2.5-flash)
+Gemini engine config (GCP project, region, model) is managed by the vision skill's `config.json`. On first use of vision, the script will prompt interactively.
 
 ## Large PDF Handling
 
